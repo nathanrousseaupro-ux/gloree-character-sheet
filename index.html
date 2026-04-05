@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glorée — Créateur de Fiche de Personnage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cinzel+Decorative:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+
+  <!-- Ambient particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-rune">✦</div>
+      <div class="header-text">
+        <h1 class="site-title">Glorée</h1>
+        <div class="title-rule"><span></span><span class="rule-gem">◆</span><span></span></div>
+        <p class="site-subtitle">Création de Fiche de Personnage</p>
+      </div>
+      <div class="header-rune">✦</div>
+    </div>
+  </header>
+
+  <!-- Main form -->
+  <main class="form-container">
+    <form id="characterForm" autocomplete="off">
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION 1 : IDENTITÉ                        -->
+      <!-- ═══════════════════════════════════════════ -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="s-rule"></span>
+          <span class="s-icon">👤</span> Identité
+          <span class="s-rule"></span>
+        </h2>
+
+        <div class="form-grid g2">
+          <div class="form-group">
+            <label for="playerName">Joueur · Pseudo ou nom réel</label>
+            <input type="text" id="playerName" placeholder="Votre pseudo ou nom">
+          </div>
+          <div class="form-group">
+            <label for="charName">Nom du Personnage</label>
+            <input type="text" id="charName" placeholder="Nom de votre alter-ego">
+          </div>
+        </div>
+
+        <div class="form-grid g3">
+          <div class="form-group">
+            <label for="race">Race</label>
+            <select id="race">
+              <option value="">— Choisir —</option>
+              <option value="Humain">⚔ Humain</option>
+              <option value="Orphérique">🌿 Orphérique</option>
+              <option value="Géant">🏔 Géant</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="nation">Nation / Origine</label>
+            <select id="nation">
+              <option value="">— Choisir —</option>
+              <option value="Edoria">🟤 Edoria</option>
+              <option value="Amba'hara">🟣 Amba'hara</option>
+              <option value="Yladenna">🔵 Yladenna</option>
+              <option value="Adénasie">🔴 Adénasie</option>
+              <option value="Dargui">🔵 Dargui</option>
+              <option value="Orphérie">🟢 Orphérie</option>
+              <option value="Désert des Oubliés">🟡 Désert des Oubliés</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="originDetail">Région précise <span class="opt">(opt.)</span></label>
+            <input type="text" id="originDetail" placeholder="Ex : Taumera, Edolin…">
+          </div>
+        </div>
+
+        <div class="form-grid g3">
+          <div class="form-group">
+            <label for="religion">Religion</label>
+            <input type="text" id="religion" value="Glorée" placeholder="Religion du personnage">
+          </div>
+          <div class="form-group">
+            <label>Main Dominante</label>
+            <div class="radio-group">
+              <label class="radio-opt"><input type="radio" name="hand" value="Droitier"><span>Droitier</span></label>
+              <label class="radio-opt"><input type="radio" name="hand" value="Gaucher"><span>Gaucher</span></label>
+              <label class="radio-opt special"><input type="radio" name="hand" value="Ambidextre"><span>Ambidextre ★</span></label>
+            </div>
+            <small class="hint">L'ambidextre est rare et vénéré · Validation MJ requise</small>
+          </div>
+          <div class="form-group">
+            <label for="alignment">Alignement</label>
+            <select id="alignment">
+              <option value="">— Choisir —</option>
+              <optgroup label="Bon">
+                <option>Loyal Bon</option>
+                <option>Neutre Bon</option>
+                <option>Chaotique Bon</option>
+              </optgroup>
+              <optgroup label="Neutre">
+                <option>Loyal Neutre</option>
+                <option>Neutre Vrai</option>
+                <option>Chaotique Neutre</option>
+              </optgroup>
+              <optgroup label="Mauvais">
+                <option>Loyal Mauvais</option>
+                <option>Neutre Mauvais</option>
+                <option>Chaotique Mauvais</option>
+              </optgroup>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid g2">
+          <div class="form-group">
+            <label for="class1">Classe Principale</label>
+            <select id="class1">
+              <option value="">— Choisir —</option>
+              <option value="Guerrier">⚔️ Guerrier</option>
+              <option value="Assassin">🗡️ Assassin</option>
+              <option value="Ingénieur">⚙️ Ingénieur</option>
+              <option value="Érudit">📚 Érudit</option>
+              <option value="Prêtre">🌟 Prêtre</option>
+              <option value="Tacticien">♟️ Tacticien</option>
+              <option value="Maître des Bêtes">🐺 Maître des Bêtes</option>
+              <option value="Alchimiste">⚗️ Alchimiste</option>
+              <option value="Chasseur">🏹 Chasseur</option>
+              <option value="Légende">👑 Légende (MJ requis)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="class2">Classe Secondaire <span class="opt">(opt.)</span></label>
+            <select id="class2">
+              <option value="">— Aucune —</option>
+              <option value="Guerrier">⚔️ Guerrier</option>
+              <option value="Assassin">🗡️ Assassin</option>
+              <option value="Ingénieur">⚙️ Ingénieur</option>
+              <option value="Érudit">📚 Érudit</option>
+              <option value="Prêtre">🌟 Prêtre</option>
+              <option value="Tacticien">♟️ Tacticien</option>
+              <option value="Maître des Bêtes">🐺 Maître des Bêtes</option>
+              <option value="Alchimiste">⚗️ Alchimiste</option>
+              <option value="Chasseur">🏹 Chasseur</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid g3">
+          <div class="form-group">
+            <label for="socialClass">Classe Sociale</label>
+            <select id="socialClass">
+              <option value="">— Choisir —</option>
+              <option>Esclave</option>
+              <option>À la rue</option>
+              <option>Pauvre</option>
+              <option selected>Moyenne</option>
+              <option>Aisée</option>
+              <option>Noble</option>
+              <option>Royale</option>
+              <option>Divine</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="job">Métier</label>
+            <input type="text" id="job" placeholder="Ex : Artisan, Mercenaire…">
+          </div>
+          <div class="form-group">
+            <label for="sex">Sexe</label>
+            <input type="text" id="sex" placeholder="Libre">
+          </div>
+        </div>
+
+        <div class="form-grid g3">
+          <div class="form-group">
+            <label for="age">Âge</label>
+            <input type="number" id="age" placeholder="En années" min="1">
+            <small class="hint">× 2 pour les tranches d'âge Orphériques</small>
+          </div>
+          <div class="form-group">
+            <label for="height">Taille / Morphologie</label>
+            <input type="text" id="height" placeholder="Ex : 1m80, élancé…">
+          </div>
+          <div class="form-group" style="grid-column: 1 / -1">
+            <label for="physique">Physique Détaillé</label>
+            <textarea id="physique" rows="2" placeholder="Couleur de peau, yeux, cheveux, marques distinctives…"></textarea>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="personality">Traits de Personnalité</label>
+          <textarea id="personality" rows="2" placeholder="Tempérament, émotions dominantes, comportements caractéristiques…"></textarea>
+        </div>
+      </section>
+
+      <div class="divider"><span>◆ ◆ ◆</span></div>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION 2 : PORTRAIT                        -->
+      <!-- ═══════════════════════════════════════════ -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="s-rule"></span>
+          <span class="s-icon">🖼</span> Portrait du Personnage
+          <span class="s-rule"></span>
+        </h2>
+
+        <div class="photo-area">
+          <div class="photo-frame" id="photoFrame" onclick="document.getElementById('photoUpload').click()">
+            <!-- Corner ornaments -->
+            <svg class="frame-svg" viewBox="0 0 320 400" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Border lines -->
+              <rect x="10" y="10" width="300" height="380" fill="none" stroke="#c9a84c" stroke-width="1.5" opacity="0.6"/>
+              <rect x="16" y="16" width="288" height="368" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/>
+              <!-- Top-Left corner -->
+              <path d="M10,40 L10,10 L40,10" fill="none" stroke="#d4a853" stroke-width="3"/>
+              <circle cx="10" cy="10" r="3" fill="#d4a853"/>
+              <!-- Top-Right corner -->
+              <path d="M280,10 L310,10 L310,40" fill="none" stroke="#d4a853" stroke-width="3"/>
+              <circle cx="310" cy="10" r="3" fill="#d4a853"/>
+              <!-- Bottom-Left corner -->
+              <path d="M10,360 L10,390 L40,390" fill="none" stroke="#d4a853" stroke-width="3"/>
+              <circle cx="10" cy="390" r="3" fill="#d4a853"/>
+              <!-- Bottom-Right corner -->
+              <path d="M280,390 L310,390 L310,360" fill="none" stroke="#d4a853" stroke-width="3"/>
+              <circle cx="310" cy="390" r="3" fill="#d4a853"/>
+              <!-- Top center ornament -->
+              <path d="M145,10 L155,4 L165,10" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+              <circle cx="155" cy="10" r="2" fill="#c9a84c"/>
+              <!-- Bottom center ornament -->
+              <path d="M145,390 L155,396 L165,390" fill="none" stroke="#c9a84c" stroke-width="1.5"/>
+              <circle cx="155" cy="390" r="2" fill="#c9a84c"/>
+              <!-- Side mid ornaments -->
+              <circle cx="10" cy="200" r="2" fill="#c9a84c"/>
+              <circle cx="310" cy="200" r="2" fill="#c9a84c"/>
+            </svg>
+            <div class="photo-content">
+              <div class="photo-placeholder" id="photoPlaceholder">
+                <div class="ph-icon">🖼</div>
+                <p>Cliquer pour choisir un portrait</p>
+                <small>PNG · JPG · WEBP<br>Recommandé 400 × 500 px</small>
+              </div>
+              <img id="photoPreview" src="" alt="Portrait du personnage">
+            </div>
+            <input type="file" id="photoUpload" accept="image/*" style="display:none" onchange="loadPhoto(this)">
+          </div>
+          <div class="photo-meta">
+            <div class="photo-note">
+              <span class="note-icon">⚠</span>
+              <span>Les images sont uniquement destinées au loisir personnel.<br>Sources : Pinterest, IA, Artstation, Hero Forge…</span>
+            </div>
+            <button type="button" class="btn-sm" onclick="document.getElementById('photoUpload').click()">Choisir un Portrait</button>
+            <button type="button" class="btn-sm danger" id="removePhotoBtn" style="display:none" onclick="removePhoto()">Supprimer</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"><span>◆ ◆ ◆</span></div>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION 3 : STATISTIQUES                    -->
+      <!-- ═══════════════════════════════════════════ -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="s-rule"></span>
+          <span class="s-icon">🎲</span> Statistiques
+          <span class="s-rule"></span>
+        </h2>
+
+        <div class="dice-notice">
+          <div class="dice-icon">🎲</div>
+          <div>
+            <strong>Dés du MJ</strong> — Le Maître de Jeu lance 6 dés et vous distribue les valeurs.<br>
+            Valeurs typiques : <span class="dice-vals">3 · 5 · 10 · 15 · 18 · 19</span>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card" data-stat="FOR">
+            <div class="stat-name">FOR</div>
+            <div class="stat-full-name">Force</div>
+            <input type="number" id="statFOR" class="stat-val" min="1" max="30" value="10" oninput="updateAll()">
+            <div class="stat-save-wrap">
+              <span class="save-lbl">Save</span>
+              <span class="save-val" id="saveFOR">+0</span>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="DEX">
+            <div class="stat-name">DEX</div>
+            <div class="stat-full-name">Dextérité</div>
+            <input type="number" id="statDEX" class="stat-val" min="1" max="30" value="10" oninput="updateAll()">
+            <div class="stat-save-wrap">
+              <span class="save-lbl">Save</span>
+              <span class="save-val" id="saveDEX">+0</span>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="CON">
+            <div class="stat-name">CON</div>
+            <div class="stat-full-name">Constitution</div>
+            <input type="number" id="statCON" class="stat-val" min="1" max="30" value="10" oninput="updateAll()">
+            <div class="stat-save-wrap">
+              <span class="save-lbl">Save</span>
+              <span class="save-val" id="saveCON">+0</span>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="INT">
+            <div class="stat-name">INT</div>
+            <div class="stat-full-name">Intelligence</div>
+            <input type="number" id="statINT" class="stat-val" min="1" max="30" value="10" oninput="updateAll()">
+            <div class="stat-save-wrap">
+              <span class="save-lbl">Save</span>
+              <span class="save-val" id="saveINT">+0</span>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="SAG">
+            <div class="stat-name">SAG</div>
+            <div class="stat-full-name">Sagesse</div>
+            <input type="number" id="statSAG" class="stat-val" min="1" max="30" value="10" oninput="updateAll()">
+            <div class="stat-save-wrap">
+              <span class="save-lbl">Save</span>
+              <span class="save-val" id="saveSAG">+0</span>
+            </div>
+          </div>
+          <div class="stat-card" data-stat="CHA">
+            <div class="stat-name">CHA</div>
+            <div class="stat-full-name">Charisme</div>
+            <input type="number" id="statCHA" class="stat-val" min="1" max="30" value="10" oninput="updateAll()">
+            <div class="stat-save-wrap">
+              <span class="save-lbl">Save</span>
+              <span class="save-val" id="saveCHA">+0</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conversion reminder -->
+        <div class="save-table">
+          <div class="st-title">Table de conversion Stat → Save</div>
+          <div class="st-grid">
+            <div class="st-row header"><span>Stat</span><span>1</span><span>2-3</span><span>4-5</span><span>6-7</span><span>8-9</span><span>10-11</span><span>12-13</span><span>14-15</span><span>16-17</span><span>18-19</span><span>20</span></div>
+            <div class="st-row"><span>Save</span><span>-5</span><span>-4</span><span>-3</span><span>-2</span><span>-1</span><span>0</span><span>+1</span><span>+2</span><span>+3</span><span>+4</span><span>+5</span></div>
+          </div>
+        </div>
+
+        <!-- HP Section -->
+        <div class="hp-section">
+          <div class="hp-card">
+            <div class="hp-header">❤️ Santé Physique</div>
+            <div class="hp-formula-row">
+              <span>Dé 1 (MJ)</span>
+              <input type="number" id="mjDie1" class="die-input" min="1" max="20" value="10" oninput="updateAll()">
+              <span>+</span>
+              <span>Dé 2 (MJ)</span>
+              <input type="number" id="mjDie2" class="die-input" min="1" max="20" value="10" oninput="updateAll()">
+              <span>+ CON×3</span>
+              <span class="hp-equals">=</span>
+              <span class="hp-result" id="hpTotal">50</span>
+            </div>
+            <small class="hint">Minimum 15 · Le MJ lance les deux dés</small>
+          </div>
+          <div class="hp-card">
+            <div class="hp-header">🧠 Santé Mentale</div>
+            <div class="hp-formula-row">
+              <span class="hp-result">100 / 100%</span>
+            </div>
+            <small class="hint">Influence le comportement en jeu</small>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"><span>◆ ◆ ◆</span></div>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION 4 : COMPÉTENCES                     -->
+      <!-- ═══════════════════════════════════════════ -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="s-rule"></span>
+          <span class="s-icon">⚡</span> Compétences
+          <span class="s-rule"></span>
+        </h2>
+
+        <div class="bonus-notice">
+          Sélectionnez <strong>3 compétences bonus</strong> <span class="bonus-val">(+2 chacune)</span>
+          selon l'histoire et le background de votre personnage.
+          <span id="bonusCount" class="bonus-counter">0 / 3 sélectionnées</span>
+        </div>
+
+        <div class="skills-grid" id="skillsGrid">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="skills-extra-notice">
+          <small>⚠ Trois (+2) en stat à répartir selon le plaisir · Non cumulables sur la même compétence</small>
+        </div>
+      </section>
+
+      <div class="divider"><span>◆ ◆ ◆</span></div>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION 5 : ÉQUIPEMENT                      -->
+      <!-- ═══════════════════════════════════════════ -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="s-rule"></span>
+          <span class="s-icon">⚔️</span> Équipement
+          <span class="s-rule"></span>
+        </h2>
+
+        <div class="slots-notice">
+          Emplacements disponibles : <strong id="equipSlots">3</strong>
+          <span class="hint">(3 de base + 1 par point de Save CON positif · Un sac +3 emplacements)</span>
+        </div>
+
+        <div class="equip-grid">
+          <div class="equip-block">
+            <h3 class="equip-h3">⚔️ Équipement Lourd</h3>
+            <small class="hint">Arme · Bouclier · Sac (1 slot chacun · 2 dagues jumelles = 1 slot)</small>
+            <div class="item-list" id="heavyList">
+              <div class="item-row"><input type="text" class="item-inp" placeholder="Ex : Épée courte"><button type="button" class="rm-btn" onclick="removeItem(this)">✕</button></div>
+            </div>
+            <button type="button" class="add-btn" onclick="addItem('heavyList')">+ Ajouter un objet</button>
+          </div>
+
+          <div class="equip-block">
+            <h3 class="equip-h3">👘 Équipement Descriptif</h3>
+            <small class="hint">Apparence : vêtements, bijoux, accessoires (non comptabilisé)</small>
+            <div class="item-list" id="descList">
+              <div class="item-row"><input type="text" class="item-inp" placeholder="Ex : Manteau en cuir bleu"><button type="button" class="rm-btn" onclick="removeItem(this)">✕</button></div>
+            </div>
+            <button type="button" class="add-btn" onclick="addItem('descList')">+ Ajouter un objet</button>
+          </div>
+        </div>
+
+        <div class="equip-block" style="margin-top:1.5rem">
+          <h3 class="equip-h3">🎒 Inventaire</h3>
+          <small class="hint">Objets utilitaires selon les capacités du personnage</small>
+          <div class="item-list" id="invList">
+            <div class="item-row"><input type="text" class="item-inp" placeholder="Ex : 3 rations de voyage"><button type="button" class="rm-btn" onclick="removeItem(this)">✕</button></div>
+          </div>
+          <button type="button" class="add-btn" onclick="addItem('invList')">+ Ajouter un objet</button>
+        </div>
+
+        <div class="money-section">
+          <h3 class="equip-h3">💰 Monnaie</h3>
+          <div class="money-grid">
+            <div class="coin copper"><label>Sou Cuivré (C)</label><input type="number" id="mCu" min="0" value="100"></div>
+            <div class="coin iron"><label>Denier de Fer (F)</label><input type="number" id="mFe" min="0" value="0"></div>
+            <div class="coin silver"><label>Florin d'Argent (A)</label><input type="number" id="mAg" min="0" value="0"></div>
+            <div class="coin gold"><label>Couronne Dorée (O)</label><input type="number" id="mAu" min="0" value="0"></div>
+            <div class="coin royal"><label>Sceau Royal (R)</label><input type="number" id="mR" min="0" value="0"></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="divider"><span>◆ ◆ ◆</span></div>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- SECTION 6 : HISTOIRE & LORE                 -->
+      <!-- ═══════════════════════════════════════════ -->
+      <section class="form-section">
+        <h2 class="section-title">
+          <span class="s-rule"></span>
+          <span class="s-icon">📜</span> Histoire & Lore
+          <span class="s-rule"></span>
+        </h2>
+
+        <div class="lore-tip">
+          💡 Plus votre historique est détaillé, plus le MJ peut s'en inspirer pour enrichir l'aventure !
+        </div>
+
+        <div class="form-group">
+          <label for="history">Histoire et Motivations</label>
+          <textarea id="history" rows="5" placeholder="Origine sociale et culturelle, événements marquants ayant forgé la personnalité, ce qui définit le personnage aujourd'hui…"></textarea>
+        </div>
+
+        <div class="form-grid g2">
+          <div class="form-group">
+            <label for="powers">Compétences / Pouvoirs / Reliques</label>
+            <textarea id="powers" rows="3" placeholder="Capacités spéciales, liens aux énergies ou reliques, dons particuliers…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="relations">Relations et Alliances</label>
+            <textarea id="relations" rows="3" placeholder="Amis, famille, ennemis, mentors, factions, clans…"></textarea>
+          </div>
+        </div>
+
+        <div class="form-grid g2">
+          <div class="form-group">
+            <label for="goalMain">Objectif Principal</label>
+            <textarea id="goalMain" rows="2" placeholder="La quête principale du personnage…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="goalSecond">Objectif Secondaire</label>
+            <textarea id="goalSecond" rows="2" placeholder="Une ambition secondaire…"></textarea>
+          </div>
+        </div>
+
+        <div class="form-grid g2">
+          <div class="form-group">
+            <label for="property">Patrimoine & Propriété</label>
+            <textarea id="property" rows="2" placeholder="Maison, terres, possessions importantes, héritages…"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="misc">Informations Annexes</label>
+            <textarea id="misc" rows="2" placeholder="Secrets, notes confidentielles au MJ, informations inclassables…"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════ -->
+      <!-- GENERATE                                     -->
+      <!-- ═══════════════════════════════════════════ -->
+      <div class="generate-area">
+        <div class="divider gen-divider"><span>✦ ✦ ✦</span></div>
+        <button type="button" class="btn-generate" onclick="generateSheet()">
+          <span>📜</span>
+          Générer ma Fiche de Personnage
+        </button>
+        <p class="gen-hint">
+          Une nouvelle fenêtre s'ouvrira avec votre fiche complète.<br>
+          Utilisez <kbd>Ctrl + P</kbd> / <kbd>⌘ + P</kbd> → <em>Enregistrer en PDF</em> pour télécharger.
+        </p>
+      </div>
+
+    </form>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-rule"><span>◆</span></div>
+    <p>Univers de <strong>Glorée</strong> — Création originale protégée · © 2020–2025</p>
+    <p class="footer-sub">Toute reproduction ou utilisation non autorisée est interdite.</p>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/generator.js"></script>
+</body>
+</html>
