@@ -595,17 +595,44 @@
       </section>
 
       <!-- ═══════════════════════════════════════════ -->
+      <!-- SAUVEGARDE / CHARGEMENT                      -->
+      <!-- ═══════════════════════════════════════════ -->
+      <div class="divider"><span>◆ ◆ ◆</span></div>
+      <section class="form-section save-section">
+        <h2 class="section-title">
+          <span class="s-rule"></span>
+          <span class="s-icon">💾</span> Sauvegarde &amp; Chargement
+          <span class="s-rule"></span>
+        </h2>
+        <div class="save-row">
+          <div class="save-block">
+            <button type="button" class="btn-save" onclick="saveCharacter()">
+              <span>💾</span> Sauvegarder la Fiche
+            </button>
+            <p class="save-hint">Télécharge un fichier <strong>.json</strong> avec toutes tes données.</p>
+          </div>
+          <div class="save-divider">ou</div>
+          <div class="save-block">
+            <label class="btn-save load" for="loadFile">
+              <span>📂</span> Charger une Fiche
+            </label>
+            <input type="file" id="loadFile" accept=".json" style="display:none" onchange="loadCharacter(this)">
+            <p class="save-hint">Recharge un fichier <strong>.json</strong> sauvegardé et remplit le formulaire.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════════════════════════════════ -->
       <!-- GENERATE                                     -->
       <!-- ═══════════════════════════════════════════ -->
       <div class="generate-area">
         <div class="divider gen-divider"><span>✦ ✦ ✦</span></div>
         <button type="button" class="btn-generate" onclick="generateSheet()">
           <span>📜</span>
-          Générer ma Fiche de Personnage
+          Générer ma Fiche de Personnage — 3 Pages
         </button>
         <p class="gen-hint">
-          Une nouvelle fenêtre s'ouvrira avec votre fiche complète.<br>
-          Utilisez <kbd>Ctrl + P</kbd> / <kbd>⌘ + P</kbd> → <em>Enregistrer en PDF</em> pour télécharger.
+          Une nouvelle fenêtre s'ouvrira · 3 pages auto · <kbd>Ctrl+P</kbd> → <em>Enregistrer en PDF</em>
         </p>
       </div>
 

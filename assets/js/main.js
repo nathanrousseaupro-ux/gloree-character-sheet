@@ -557,3 +557,206 @@ function updateAssignedDisplay() {
   }
 }
 
+
+// ── SAVE / LOAD ────────────────────────────────────────
+
+function saveCharacter() {
+  const d = getFormData();
+  // Also save raw form state for reloading
+  const save = {
+    _version: 2,
+    _savedAt: new Date().toISOString(),
+    playerName:   document.getElementById('playerName').value,
+    charName:     document.getElementById('charName').value,
+    race:         document.getElementById('race').value,
+    nation:       document.getElementById('nation').value,
+    originDetail: document.getElementById('originDetail').value,
+    religionType: document.getElementById('religionType')?.value || 'gloree',
+    religionDemidieu: document.getElementById('religionDemidieu')?.value || '',
+    religionCulte: document.getElementById('religionCulte')?.value || '',
+    hand:         document.querySelector('input[name="hand"]:checked')?.value || '',
+    class1:       document.getElementById('class1').value,
+    class2Enable: document.getElementById('class2Enable')?.checked || false,
+    class2:       document.getElementById('class2').value,
+    socialClass:  document.getElementById('socialClass').value,
+    job:          document.getElementById('job').value,
+    sex:          document.getElementById('sex').value,
+    age:          document.getElementById('age').value,
+    height:       currentHeight,
+    physique:     document.getElementById('physique').value,
+    personality:  document.getElementById('personality').value,
+    alignment:    document.getElementById('alignment').value,
+    photo:        photoDataUrl,
+    statFOR:      document.getElementById('statFOR').value,
+    statDEX:      document.getElementById('statDEX').value,
+    statCON:      document.getElementById('statCON').value,
+    statINT:      document.getElementById('statINT').value,
+    statSAG:      document.getElementById('statSAG').value,
+    statCHA:      document.getElementById('statCHA').value,
+    mjDie1:       document.getElementById('mjDie1').value,
+    mjDie2:       document.getElementById('mjDie2').value,
+    bonusSkills:  [...selectedBonusSkills],
+    heavyEquip:   getListItems('heavyList'),
+    descEquip:    getListItems('descList'),
+    inventory:    getListItems('invList'),
+    mCu: document.getElementById('mCu').value,
+    mFe: document.getElementById('mFe').value,
+    mAg: document.getElementById('mAg').value,
+    mAu: document.getElementById('mAu').value,
+    mR:  document.getElementById('mR').value,
+    history:     document.getElementById('history').value,
+    powers:      document.getElementById('powers').value,
+    relations:   document.getElementById('relations').value,
+    goalMain:    document.getElementById('goalMain').value,
+    goalSecond:  document.getElementById('goalSecond').value,
+    property:    document.getElementById('property').value,
+    misc:        document.getElementById('misc').value,
+  };
+
+  const filename = `gloree_${(save.charName||'personnage').replace(/[^a-zA-Z0-9]/g,'_')}.json`;
+  const blob = new Blob([JSON.stringify(save, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  flashNotice(`✓ Fiche sauvegardée : ${filename}`);
+}
+
+function getListItems(id) {
+  return Array.from(document.querySelectorAll(`#${id} .item-inp`))
+    .map(i => i.value.trim()).filter(Boolean);
+}
+
+function loadCharacter(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const s = JSON.parse(e.target.result);
+      applyLoadedData(s);
+      flashNotice('✓ Fiche chargée avec succès !');
+    } catch(err) {
+      flashNotice('⚠ Fichier invalide ou corrompu.');
+    }
+  };
+  reader.readAsText(file);
+  input.value = ''; // reset so same file can be reloaded
+}
+
+function applyLoadedData(s) {
+  const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+
+  set('playerName',   s.playerName);
+  set('charName',     s.charName);
+  set('race',         s.race);
+  set('nation',       s.nation);
+  set('originDetail', s.originDetail);
+  set('alignment',    s.alignment);
+  set('socialClass',  s.socialClass);
+  set('job',          s.job);
+  set('sex',          s.sex);
+  set('age',          s.age);
+  set('physique',     s.physique);
+  set('personality',  s.personality);
+  set('class1',       s.class1);
+
+  // Religion
+  if (s.religionType) {
+    const rt = document.getElementById('religionType');
+    if (rt) { rt.value = s.religionType; updateReligionUI(); }
+  }
+  if (s.religionDemidieu) set('religionDemidieu', s.religionDemidieu);
+  if (s.religionCulte)    set('religionCulte',    s.religionCulte);
+
+  // Hand
+  if (s.hand) {
+    const r = document.querySelector(`input[name="hand"][value="${s.hand}"]`);
+    if (r) r.checked = true;
+  }
+
+  // Class 2
+  const c2e = document.getElementById('class2Enable');
+  if (c2e) { c2e.checked = !!s.class2Enable; toggleClass2(); }
+  if (s.class2) set('class2', s.class2);
+
+  // Height
+  const cfg = RACE_CONFIG[s.race] || RACE_CONFIG['Humain'];
+  currentHeight = s.height || cfg.heightDefault;
+  const hv = document.getElementById('heightVal');
+  if (hv) hv.textContent = currentHeight;
+
+  // Age badge
+  updateAgeBadge();
+  onRaceChange(); // update hints
+  // Re-set age after onRaceChange (which resets it)
+  if (s.age) set('age', s.age);
+  updateAgeBadge();
+
+  // Stats
+  ['FOR','DEX','CON','INT','SAG','CHA'].forEach(k => set(`stat${k}`, s[`stat${k}`]));
+  set('mjDie1', s.mjDie1);
+  set('mjDie2', s.mjDie2);
+
+  // Bonus skills
+  selectedBonusSkills.clear();
+  document.querySelectorAll('.skill-item').forEach(el => el.classList.remove('bonus-selected'));
+  if (Array.isArray(s.bonusSkills)) {
+    s.bonusSkills.forEach(idx => {
+      selectedBonusSkills.add(idx);
+      const el = document.querySelector(`.skill-item[data-idx="${idx}"]`);
+      if (el) el.classList.add('bonus-selected');
+    });
+  }
+  const counter = document.getElementById('bonusCount');
+  if (counter) {
+    counter.textContent = `${selectedBonusSkills.size} / 3 sélectionnées`;
+    counter.className = 'bonus-counter' + (selectedBonusSkills.size === 3 ? ' full' : '');
+  }
+
+  // Equipment lists
+  loadListItems('heavyList', s.heavyEquip || []);
+  loadListItems('descList',  s.descEquip  || []);
+  loadListItems('invList',   s.inventory  || []);
+
+  // Money
+  set('mCu', s.mCu); set('mFe', s.mFe); set('mAg', s.mAg); set('mAu', s.mAu); set('mR', s.mR);
+
+  // Lore
+  set('history',    s.history);
+  set('powers',     s.powers);
+  set('relations',  s.relations);
+  set('goalMain',   s.goalMain);
+  set('goalSecond', s.goalSecond);
+  set('property',   s.property);
+  set('misc',       s.misc);
+
+  // Photo
+  if (s.photo) {
+    photoDataUrl = s.photo;
+    const prev = document.getElementById('photoPreview');
+    const ph   = document.getElementById('photoPlaceholder');
+    const rmb  = document.getElementById('removePhotoBtn');
+    if (prev) { prev.src = s.photo; prev.style.display = 'block'; }
+    if (ph)   ph.style.display = 'none';
+    if (rmb)  rmb.style.display = 'inline-block';
+  }
+
+  updateAll();
+}
+
+function loadListItems(listId, items) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  list.innerHTML = '';
+  const toAdd = items.length > 0 ? items : [''];
+  toAdd.forEach(val => {
+    const row = document.createElement('div');
+    row.className = 'item-row';
+    row.innerHTML = `<input type="text" class="item-inp" value="${esc2(val)}"><button type="button" class="rm-btn" onclick="removeItem(this)">✕</button>`;
+    list.appendChild(row);
+  });
+}
+
+function esc2(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
