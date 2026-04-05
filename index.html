@@ -55,7 +55,7 @@
         <div class="form-grid g3">
           <div class="form-group">
             <label for="race">Race</label>
-            <select id="race">
+            <select id="race" onchange="onRaceChange()">
               <option value="">— Choisir —</option>
               <option value="Humain">⚔ Humain</option>
               <option value="Orphérique">🌿 Orphérique</option>
@@ -83,8 +83,51 @@
 
         <div class="form-grid g3">
           <div class="form-group">
-            <label for="religion">Religion</label>
-            <input type="text" id="religion" value="Glorée" placeholder="Religion du personnage">
+            <label for="religionType">Religion</label>
+            <select id="religionType" onchange="updateReligionUI()">
+              <option value="gloree">⚖️ Glorée (Foi principale)</option>
+              <option value="demidieu">👑 Branche Demi-Dieu</option>
+              <option value="culte">🕯️ Culte</option>
+              <option value="noncroyant">✖️ Non-Croyant</option>
+            </select>
+            <div id="religionSubDemidieu" class="religion-sub" style="display:none; margin-top:0.5rem;">
+              <select id="religionDemidieu">
+                <option value="">— Choisir le Demi-Dieu —</option>
+                <optgroup label="Officiels (Empora)">
+                  <option>Azod, le Façonneur</option>
+                  <option>Irra, l'Insuffleuse</option>
+                  <option>Jare, l'Immuable</option>
+                  <option>Goddon, l'Abondant</option>
+                  <option>Van, l'Insinuateur</option>
+                  <option>Tain, Porteur de la Source</option>
+                  <option>Dordon, le Veilleur</option>
+                  <option>Miriel, l'Étreinte du Temps</option>
+                </optgroup>
+                <optgroup label="Non-Officiels (Post-Empora)">
+                  <option>Mohn, Légende Éternelle</option>
+                  <option>Aramat, l'Océan Pourpre</option>
+                  <option>Noya, le Voile Anarchique</option>
+                </optgroup>
+              </select>
+            </div>
+            <div id="religionSubCulte" class="religion-sub" style="display:none; margin-top:0.5rem;">
+              <select id="religionCulte">
+                <option value="">— Choisir le Culte —</option>
+                <optgroup label="Reconnus par l'Empire">
+                  <option>Le Culte de Jour</option>
+                  <option>Le Culte de Nuit</option>
+                  <option>L'Ascension de l'Élu</option>
+                  <option>Le Saint Ordre des Jumeaux</option>
+                </optgroup>
+                <optgroup label="Tolérés (Non reconnus)">
+                  <option>Les Cultes des Demi-Grâces</option>
+                  <option>Le Culte des Énergies Gardiennes</option>
+                </optgroup>
+                <optgroup label="Rejetés par l'Empire">
+                  <option>Le Culte d'Emar</option>
+                </optgroup>
+              </select>
+            </div>
           </div>
           <div class="form-group">
             <label>Main Dominante</label>
@@ -136,9 +179,14 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="class2">Classe Secondaire <span class="opt">(opt.)</span></label>
-            <select id="class2">
-              <option value="">— Aucune —</option>
+            <label>Classe Secondaire</label>
+            <label class="mj-checkbox-label">
+              <input type="checkbox" id="class2Enable" onchange="toggleClass2()">
+              <span>Validé avec le MJ</span>
+              <span class="mj-badge">⚠ Validation requise</span>
+            </label>
+            <select id="class2" disabled class="locked-select">
+              <option value="">— Déverrouiller avec le MJ —</option>
               <option value="Guerrier">⚔️ Guerrier</option>
               <option value="Assassin">🗡️ Assassin</option>
               <option value="Ingénieur">⚙️ Ingénieur</option>
@@ -179,13 +227,25 @@
 
         <div class="form-grid g3">
           <div class="form-group">
-            <label for="age">Âge</label>
-            <input type="number" id="age" placeholder="En années" min="1">
-            <small class="hint">× 2 pour les tranches d'âge Orphériques</small>
+            <label>Âge <span class="age-category-badge" id="ageCategoryBadge">Adulte</span></label>
+            <div class="age-picker">
+              <button type="button" class="arrow-btn" onclick="changeAge(-1)">◀</button>
+              <input type="number" id="age" class="age-input" min="1" value="25" oninput="updateAgeBadge()">
+              <button type="button" class="arrow-btn" onclick="changeAge(1)">▶</button>
+            </div>
+            <small class="hint" id="ageHint">Humain · Adulte : 18–59 ans</small>
           </div>
           <div class="form-group">
-            <label for="height">Taille / Morphologie</label>
-            <input type="text" id="height" placeholder="Ex : 1m80, élancé…">
+            <label>Taille</label>
+            <div class="height-picker">
+              <button type="button" class="arrow-btn" onclick="changeHeight(-1)">◀</button>
+              <div class="height-display">
+                <span id="heightVal">170</span>
+                <span class="height-unit">cm</span>
+              </div>
+              <button type="button" class="arrow-btn" onclick="changeHeight(1)">▶</button>
+            </div>
+            <small class="hint" id="heightHint">Humain · 150–210 cm</small>
           </div>
           <div class="form-group" style="grid-column: 1 / -1">
             <label for="physique">Physique Détaillé</label>
@@ -278,6 +338,27 @@
           <div>
             <strong>Dés du MJ</strong> — Le Maître de Jeu lance 6 dés et vous distribue les valeurs.<br>
             Valeurs typiques : <span class="dice-vals">3 · 5 · 10 · 15 · 18 · 19</span>
+          </div>
+        </div>
+
+        <!-- DICE ROLLER -->
+        <div class="dice-roller" id="diceRoller">
+          <div class="dr-header">
+            <span class="dr-title">🎲 Lancer les Dés</span>
+            <span class="dr-rerolls" id="drRerollsLeft">3 relances restantes</span>
+          </div>
+          <div class="dr-dice-row" id="drDiceRow">
+            <div class="dr-empty">Cliquez sur "Lancer" pour générer vos 6 valeurs.</div>
+          </div>
+          <div class="dr-actions">
+            <button type="button" class="btn-roll" id="btnRoll" onclick="rollDice()">⚄ Lancer les 6 dés</button>
+            <div class="dr-assign-hint" id="drAssignHint" style="display:none">
+              Cliquez sur une valeur, puis sur la stat à assigner.
+            </div>
+          </div>
+          <div class="dr-assigned" id="drAssigned" style="display:none">
+            <span class="dr-assigned-lbl">Valeurs assignées :</span>
+            <span id="drAssignedList"></span>
           </div>
         </div>
 
@@ -533,7 +614,7 @@
 
   <footer class="site-footer">
     <div class="footer-rule"><span>◆</span></div>
-    <p>Univers de <strong>Glorée</strong> — Création originale protégée · © 2020–2025</p>
+    <p>Univers de <strong>Glorée</strong> — Création originale protégée · © 2020–2026</p>
     <p class="footer-sub">Toute reproduction ou utilisation non autorisée est interdite.</p>
   </footer>
 

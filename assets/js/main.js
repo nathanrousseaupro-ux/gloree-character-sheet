@@ -257,6 +257,30 @@ function getFormData() {
   // Gather hand
   const handEl = document.querySelector('input[name="hand"]:checked');
 
+  // Religion
+  let religionStr = '—';
+  const relType = document.getElementById('religionType') ? document.getElementById('religionType').value : 'gloree';
+  if (relType === 'gloree')       religionStr = 'Glorée';
+  else if (relType === 'demidieu') {
+    const dd = document.getElementById('religionDemidieu').value;
+    religionStr = dd ? `Branche Demi-Dieu · ${dd}` : 'Branche Demi-Dieu';
+  } else if (relType === 'culte') {
+    const cu = document.getElementById('religionCulte').value;
+    religionStr = cu ? `Culte · ${cu}` : 'Culte';
+  } else if (relType === 'noncroyant') religionStr = 'Non-Croyant';
+
+  // Class 2
+  const class2Val = document.getElementById('class2Enable') && document.getElementById('class2Enable').checked
+    ? document.getElementById('class2').value
+    : '';
+
+  // Height
+  const heightStr = `${currentHeight} cm`;
+
+  // Age category
+  const ageBadgeEl = document.getElementById('ageCategoryBadge');
+  const ageCat = ageBadgeEl ? ageBadgeEl.textContent : '';
+
   // Gather bonus skill names
   const bonusNames = [...selectedBonusSkills].map(i => SKILLS[i].name);
 
@@ -285,15 +309,16 @@ function getFormData() {
     race:        document.getElementById('race').value,
     nation:      document.getElementById('nation').value,
     originDetail: document.getElementById('originDetail').value.trim(),
-    religion:    document.getElementById('religion').value.trim(),
+    religion:    religionStr,
     hand:        handEl ? handEl.value : '—',
     class1:      document.getElementById('class1').value,
-    class2:      document.getElementById('class2').value,
+    class2:      class2Val,
     socialClass: document.getElementById('socialClass').value,
     job:         document.getElementById('job').value.trim(),
     sex:         document.getElementById('sex').value.trim(),
     age:         document.getElementById('age').value,
-    height:      document.getElementById('height').value.trim(),
+    ageCategory: ageCat,
+    height:      heightStr,
     physique:    document.getElementById('physique').value.trim(),
     personality: document.getElementById('personality').value.trim(),
     alignment:   document.getElementById('alignment').value,
@@ -340,3 +365,195 @@ function getFormData() {
     misc:       document.getElementById('misc').value.trim(),
   };
 }
+
+// ── RELIGION UI ────────────────────────────────────────
+function updateReligionUI() {
+  const val = document.getElementById('religionType').value;
+  document.getElementById('religionSubDemidieu').style.display = val === 'demidieu' ? 'block' : 'none';
+  document.getElementById('religionSubCulte').style.display = val === 'culte' ? 'block' : 'none';
+}
+
+// ── CLASS 2 TOGGLE ─────────────────────────────────────
+function toggleClass2() {
+  const cb = document.getElementById('class2Enable');
+  const sel = document.getElementById('class2');
+  sel.disabled = !cb.checked;
+  sel.className = cb.checked ? '' : 'locked-select';
+  if (!cb.checked) sel.value = '';
+}
+
+// ── RACE CONFIG ────────────────────────────────────────
+const RACE_CONFIG = {
+  'Humain':      { heightMin: 150, heightMax: 210, heightDefault: 170,
+                   ages: { jeune:[1,17], adulte:[18,59], age:[60,79], tresage:[80,999] },
+                   ageHint: 'Humain · Adulte : 18–59 ans', heightHint: 'Humain · 150–210 cm' },
+  'Orphérique':  { heightMin: 190, heightMax: 250, heightDefault: 210,
+                   ages: { jeune:[1,35], adulte:[36,119], age:[120,159], tresage:[160,999] },
+                   ageHint: 'Orphérique · Adulte : 36–119 ans (longévité ×2)', heightHint: 'Orphérique · 190–250 cm' },
+  'Géant':       { heightMin: 250, heightMax: 500, heightDefault: 350,
+                   ages: { jeune:[1,50], adulte:[51,200], age:[201,350], tresage:[351,999] },
+                   ageHint: 'Géant · Adulte : 51–200 ans', heightHint: 'Géant · 250–500 cm' },
+};
+
+let currentHeight = 170;
+
+function getRaceConfig() {
+  const race = document.getElementById('race').value;
+  return RACE_CONFIG[race] || RACE_CONFIG['Humain'];
+}
+
+function onRaceChange() {
+  const cfg = getRaceConfig();
+  currentHeight = cfg.heightDefault;
+  document.getElementById('heightVal').textContent = currentHeight;
+  document.getElementById('heightHint').textContent = cfg.heightHint;
+  document.getElementById('ageHint').textContent = cfg.ageHint;
+  document.getElementById('age').value = Math.round((cfg.ages.adulte[0] + cfg.ages.adulte[1]) / 2);
+  updateAgeBadge();
+}
+
+function changeHeight(delta) {
+  const cfg = getRaceConfig();
+  currentHeight = Math.max(cfg.heightMin, Math.min(cfg.heightMax, currentHeight + delta));
+  document.getElementById('heightVal').textContent = currentHeight;
+}
+
+function changeAge(delta) {
+  const inp = document.getElementById('age');
+  inp.value = Math.max(1, parseInt(inp.value || 1) + delta);
+  updateAgeBadge();
+}
+
+function updateAgeBadge() {
+  const cfg = getRaceConfig();
+  const age = parseInt(document.getElementById('age').value) || 1;
+  const badge = document.getElementById('ageCategoryBadge');
+
+  let cat = 'adulte', label = 'Adulte';
+  if      (age <= cfg.ages.jeune[1])   { cat = 'jeune';   label = 'Jeune'; }
+  else if (age <= cfg.ages.adulte[1])  { cat = 'adulte';  label = 'Adulte'; }
+  else if (age <= cfg.ages.age[1])     { cat = 'age';     label = 'Âgé'; }
+  else                                  { cat = 'tresage'; label = 'Très Âgé'; }
+
+  badge.textContent = label;
+  badge.className = 'age-category-badge ' + cat;
+}
+
+// ── DICE ROLLER ────────────────────────────────────────
+let rollsLeft = 3;
+let diceValues = [];
+let selectedDieIdx = null;
+let assignedStats = {}; // { statName: value }
+
+// Weighted random dice roll: mostly mid-values, some highs/lows
+function weightedDie() {
+  // Roll 4d6 drop lowest (classic RPG method, gives 3-18 range, avg ~12)
+  const rolls = [1,2,3,4].map(() => Math.ceil(Math.random() * 6));
+  rolls.sort((a,b) => a - b);
+  const sum = rolls[1] + rolls[2] + rolls[3]; // drop lowest
+  // Scale to 1-20 range: sum is 3-18, map to 1-20
+  return Math.round(1 + (sum - 3) * (19 / 15));
+}
+
+function rollDice() {
+  if (rollsLeft <= 0) return;
+  rollsLeft--;
+  diceValues = Array.from({ length: 6 }, weightedDie).sort((a,b) => a - b);
+  selectedDieIdx = null;
+  assignedStats = {};
+  renderDice();
+  updateRollUI();
+}
+
+function renderDice() {
+  const row = document.getElementById('drDiceRow');
+  row.innerHTML = '';
+
+  diceValues.forEach((val, idx) => {
+    const save = calcSave(val);
+    const chip = document.createElement('div');
+    chip.className = 'die-chip roll-anim' + (assignedStats[idx] !== undefined ? ' used' : '');
+    chip.dataset.idx = idx;
+    chip.style.animationDelay = `${idx * 0.06}s`;
+    chip.innerHTML = `<div class="die-val">${val}</div><div class="die-save">${fmt(save)}</div>`;
+    chip.onclick = () => selectDie(idx);
+    row.appendChild(chip);
+  });
+
+  document.getElementById('drAssignHint').style.display = diceValues.length ? 'block' : 'none';
+  updateAssignedDisplay();
+}
+
+function selectDie(idx) {
+  if (assignedStats[idx] !== undefined) return; // already used
+  selectedDieIdx = idx;
+
+  // Highlight
+  document.querySelectorAll('.die-chip').forEach(c => c.classList.remove('selected'));
+  const chip = document.querySelector(`.die-chip[data-idx="${idx}"]`);
+  if (chip) chip.classList.add('selected');
+
+  // Make stat cards clickable
+  document.querySelectorAll('.stat-card').forEach(card => {
+    card.classList.add('awaiting-assign');
+    card.onclick = () => assignDie(card.dataset.stat);
+  });
+
+  flashNotice(`Valeur ${diceValues[idx]} sélectionnée · Cliquez sur une stat pour l'assigner`);
+}
+
+function assignDie(statKey) {
+  if (selectedDieIdx === null) return;
+
+  const val = diceValues[selectedDieIdx];
+
+  // Update stat input
+  document.getElementById(`stat${statKey}`).value = val;
+  updateAll();
+
+  // Mark die as used
+  assignedStats[selectedDieIdx] = statKey;
+
+  // Reset stat-card click handlers
+  document.querySelectorAll('.stat-card').forEach(card => {
+    card.classList.remove('awaiting-assign');
+    card.onclick = null;
+  });
+
+  selectedDieIdx = null;
+  renderDice();
+}
+
+function updateRollUI() {
+  const btn = document.getElementById('btnRoll');
+  const lbl = document.getElementById('drRerollsLeft');
+
+  if (rollsLeft <= 0) {
+    btn.disabled = true;
+    btn.textContent = '⚄ Aucune relance restante';
+    lbl.classList.add('depleted');
+  } else {
+    btn.disabled = false;
+    btn.textContent = rollsLeft < 3 ? `⚄ Relancer (${rollsLeft} restante${rollsLeft > 1 ? 's' : ''})` : '⚄ Lancer les 6 dés';
+    lbl.classList.remove('depleted');
+  }
+  lbl.textContent = `${rollsLeft} relance${rollsLeft > 1 ? 's' : ''} restante${rollsLeft > 1 ? 's' : ''}`;
+}
+
+function updateAssignedDisplay() {
+  const container = document.getElementById('drAssigned');
+  const list = document.getElementById('drAssignedList');
+  const statLabels = { FOR:'Force', DEX:'Dextérité', CON:'Constitution', INT:'Intelligence', SAG:'Sagesse', CHA:'Charisme' };
+
+  const tags = Object.entries(assignedStats).map(([dieIdx, stat]) =>
+    `<span class="assigned-tag">${statLabels[stat] || stat} : ${diceValues[dieIdx]}</span>`
+  ).join('');
+
+  if (tags) {
+    container.style.display = 'block';
+    list.innerHTML = tags;
+  } else {
+    container.style.display = 'none';
+  }
+}
+
