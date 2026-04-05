@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════
-   GLORÉE — generator.js
-   Character sheet HTML generation + print/PDF
+   GLORÉE — generator.js  v3
+   Layout vertical, optimisé impression / PDF
    ═══════════════════════════════════════════════════════ */
 
 'use strict';
@@ -8,119 +8,104 @@
 function generateSheet() {
   const d = getFormData();
   const html = buildSheetHTML(d);
-
-  const win = window.open('', '_blank', 'width=1100,height=800');
-  if (!win) {
-    alert('Veuillez autoriser les popups pour ce site afin de générer la fiche.');
-    return;
-  }
+  const win = window.open('', '_blank', 'width=1000,height=800');
+  if (!win) { alert('Autorisez les popups pour générer la fiche.'); return; }
   win.document.open();
   win.document.write(html);
   win.document.close();
 }
 
-// ── HELPERS ────────────────────────────────────────────
-const fmt = (v) => (v >= 0 ? `+${v}` : `${v}`);
-const esc = (s) => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-const nl2br = (s) => esc(s).replace(/\n/g, '<br>');
-const orDash = (v) => v || '—';
+/* ── helpers ─────────────────────────────────────────── */
+const fmt    = v  => (v >= 0 ? `+${v}` : `${v}`);
+const esc    = s  => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const nl2br  = s  => esc(s).replace(/\n/g,'<br>');
+const orDash = v  => v || '—';
+const scoreColor = v => v > 0 ? '#4a9e6a' : v < 0 ? '#aa4444' : '#8a7040';
 
-function scoreColor(v) {
-  return v > 0 ? '#6dbf8a' : v < 0 ? '#cc6666' : '#c9a84c';
-}
-
-// ── SHEET HTML ─────────────────────────────────────────
+/* ── main builder ────────────────────────────────────── */
 function buildSheetHTML(d) {
-  const statKeys = ['FOR','DEX','CON','INT','SAG','CHA'];
-  const statLabels = { FOR:'Force', DEX:'Dextérité', CON:'Constitution', INT:'Intelligence', SAG:'Sagesse', CHA:'Charisme' };
 
-  const statsHTML = statKeys.map(k => `
-    <div class="stat-cell">
+  /* PORTRAIT */
+  const portrait = d.photo
+    ? `<img src="${d.photo}" alt="Portrait" class="portrait-img">`
+    : `<div class="portrait-empty">Portrait<br>non fourni</div>`;
+
+  /* IDENTITY ROWS */
+  const idRows = [
+    ['Race',           orDash(d.race)],
+    ['Nation',         [d.nation, d.originDetail].filter(Boolean).join(', ') || '—'],
+    ['Religion',       orDash(d.religion)],
+    ['Main Dominante', orDash(d.hand)],
+    ['Sexe',           orDash(d.sex)],
+    ['Âge',            d.age ? `${d.age} ans${d.ageCategory ? ' · ' + d.ageCategory : ''}` : '—'],
+    ['Taille',         orDash(d.height)],
+    ['Classe Sociale', orDash(d.socialClass)],
+    ['Métier',         orDash(d.job)],
+    ['Alignement',     orDash(d.alignment)],
+  ].map(([k,v]) => `
+    <tr>
+      <td class="id-key">${esc(k)}</td>
+      <td class="id-val">${esc(v)}</td>
+    </tr>`).join('');
+
+  /* CLASSES */
+  const classRows = [
+    ['Classe Principale', orDash(d.class1)],
+    d.class2 ? ['Classe Secondaire', d.class2] : null,
+  ].filter(Boolean).map(([k,v]) => `
+    <tr>
+      <td class="id-key">${esc(k)}</td>
+      <td class="id-val">${esc(v)}</td>
+    </tr>`).join('');
+
+  /* STATS */
+  const statKeys   = ['FOR','DEX','CON','INT','SAG','CHA'];
+  const statLabels = {FOR:'Force',DEX:'Dextérité',CON:'Constitution',INT:'Intelligence',SAG:'Sagesse',CHA:'Charisme'};
+
+  const statCells = statKeys.map(k => `
+    <td class="stat-cell">
       <div class="sc-key">${k}</div>
+      <div class="sc-sub">${statLabels[k]}</div>
       <div class="sc-val">${d.stats[k]}</div>
-      <div class="sc-save">${fmt(d.saves[k])}</div>
-      <div class="sc-lbl">Save</div>
-    </div>
-  `).join('');
+      <div class="sc-save-lbl">Save</div>
+      <div class="sc-save" style="color:${scoreColor(d.saves[k])}">${fmt(d.saves[k])}</div>
+    </td>`).join('');
 
-  const skillRows = d.skillScores.map(s => `
-    <tr class="${s.hasBonus ? 'bonus-row' : ''}">
-      <td class="sk-name">${esc(s.name)}${s.hasBonus ? ' <span class="bonus-star">★</span>' : ''}</td>
-      <td class="sk-formula">${esc(s.formula)}</td>
-      <td class="sk-score" style="color:${scoreColor(s.score)}">${fmt(s.score)}</td>
-    </tr>
-  `).join('');
-
-  const heavyItems = d.heavyEquip.length
-    ? d.heavyEquip.map(i => `<li>${esc(i)}</li>`).join('')
-    : '<li class="empty">—</li>';
-
-  const descItems = d.descEquip.length
-    ? d.descEquip.map(i => `<li>${esc(i)}</li>`).join('')
-    : '<li class="empty">—</li>';
-
-  const invItems = d.inventory.length
-    ? d.inventory.map(i => `<li>${esc(i)}</li>`).join('')
+  /* EQUIP lists */
+  const liList = (arr) => arr.length
+    ? arr.map(i => `<li>${esc(i)}</li>`).join('')
     : '<li class="empty">—</li>';
 
   const moneyStr = [
-    d.money.Cu && `${d.money.Cu} C`,
-    d.money.Fe && `${d.money.Fe} F`,
-    d.money.Ag && `${d.money.Ag} A`,
-    d.money.Au && `${d.money.Au} O`,
-    d.money.R  && `${d.money.R} R`,
+    d.money.Cu && `${d.money.Cu} Sou(s) Cuivré`,
+    d.money.Fe && `${d.money.Fe} Denier(s) de Fer`,
+    d.money.Ag && `${d.money.Ag} Florin(s) d'Argent`,
+    d.money.Au && `${d.money.Au} Couronne(s) Dorée`,
+    d.money.R  && `${d.money.R} Sceau(x) Royal`,
   ].filter(Boolean).join(' · ') || '—';
 
-  const photoBlock = d.photo
-    ? `<div class="portrait-wrapper">
-         <div class="portrait-frame">
-           <img src="${d.photo}" alt="Portrait">
-           <svg class="pf-svg" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
-             <rect x="4" y="4" width="192" height="252" fill="none" stroke="#c9a84c" stroke-width="1.5" opacity="0.7"/>
-             <rect x="9" y="9" width="182" height="242" fill="none" stroke="#c9a84c" stroke-width="0.5" opacity="0.4"/>
-             <path d="M4,30 L4,4 L30,4" fill="none" stroke="#d4a853" stroke-width="3"/>
-             <circle cx="4" cy="4" r="3" fill="#d4a853"/>
-             <path d="M170,4 L196,4 L196,30" fill="none" stroke="#d4a853" stroke-width="3"/>
-             <circle cx="196" cy="4" r="3" fill="#d4a853"/>
-             <path d="M4,230 L4,256 L30,256" fill="none" stroke="#d4a853" stroke-width="3"/>
-             <circle cx="4" cy="256" r="3" fill="#d4a853"/>
-             <path d="M170,256 L196,256 L196,230" fill="none" stroke="#d4a853" stroke-width="3"/>
-             <circle cx="196" cy="256" r="3" fill="#d4a853"/>
-           </svg>
-         </div>
-       </div>`
-    : `<div class="portrait-wrapper">
-         <div class="portrait-frame no-photo">
-           <div class="no-photo-inner">Portrait<br>non fourni</div>
-           <svg class="pf-svg" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
-             <rect x="4" y="4" width="192" height="252" fill="none" stroke="#7a6028" stroke-width="1.5"/>
-             <path d="M4,30 L4,4 L30,4" fill="none" stroke="#7a6028" stroke-width="2"/>
-             <circle cx="4" cy="4" r="2.5" fill="#7a6028"/>
-             <path d="M170,4 L196,4 L196,30" fill="none" stroke="#7a6028" stroke-width="2"/>
-             <circle cx="196" cy="4" r="2.5" fill="#7a6028"/>
-             <path d="M4,230 L4,256 L30,256" fill="none" stroke="#7a6028" stroke-width="2"/>
-             <circle cx="4" cy="256" r="2.5" fill="#7a6028"/>
-             <path d="M170,256 L196,256 L196,230" fill="none" stroke="#7a6028" stroke-width="2"/>
-             <circle cx="196" cy="256" r="2.5" fill="#7a6028"/>
-           </svg>
-         </div>
-       </div>`;
+  /* LORE */
+  const loreItems = [
+    { label:'Histoire & Motivations',           val: d.history    },
+    { label:'Compétences / Pouvoirs / Reliques', val: d.powers    },
+    { label:'Relations & Alliances',             val: d.relations  },
+    { label:'Objectif Principal',                val: d.goalMain   },
+    { label:'Objectif Secondaire',               val: d.goalSecond },
+    { label:'Patrimoine & Propriété',            val: d.property   },
+    { label:'Informations Annexes',              val: d.misc       },
+  ].filter(x => x.val);
 
-  const loreBlock = [
-    { label: 'Histoire & Motivations',     val: d.history    },
-    { label: 'Compétences / Pouvoirs / Reliques', val: d.powers  },
-    { label: 'Relations & Alliances',      val: d.relations  },
-    { label: 'Objectif Principal',         val: d.goalMain   },
-    { label: 'Objectif Secondaire',        val: d.goalSecond },
-    { label: 'Patrimoine & Propriété',     val: d.property   },
-    { label: 'Informations Annexes',       val: d.misc       },
-  ].filter(x => x.val).map(x => `
-    <div class="lore-item">
+  const loreHTML = loreItems.map(x => `
+    <div class="lore-block">
       <div class="lore-label">${esc(x.label)}</div>
       <div class="lore-text">${nl2br(x.val)}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 
+  const today = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
+
+  /* ═══════════════════════════════════════════════════
+     FULL HTML
+     ═══════════════════════════════════════════════════ */
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -129,552 +114,314 @@ function buildSheetHTML(d) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cinzel+Decorative:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
 <style>
-/* ─── RESET & BASE ─── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:      #0d0906;
-  --gold:    #c9a84c;
-  --goldl:   #e8c97a;
-  --goldd:   #7a6028;
-  --cream:   #e0cfa8;
-  --creamd:  #9a8060;
-  --border:  rgba(201,168,76,0.3);
-  --red:     rgba(138,26,42,0.15);
-  --fh:      'Cinzel', serif;
-  --fd:      'Cinzel Decorative', serif;
-  --fb:      'EB Garamond', serif;
+  --bg:    #0d0906;
+  --card:  #120d07;
+  --gold:  #c9a84c;
+  --goldl: #e8c97a;
+  --goldd: #7a6028;
+  --cream: #e0cfa8;
+  --dim:   #9a8060;
+  --bdr:   rgba(201,168,76,.28);
+  --fh:    'Cinzel', serif;
+  --fd:    'Cinzel Decorative', serif;
+  --fb:    'EB Garamond', serif;
 }
 
-body {
-  background: var(--bg);
-  color: var(--cream);
-  font-family: var(--fb);
-  font-size: 11.5pt;
-  line-height: 1.55;
-  min-height: 100vh;
-}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--cream); font-family:var(--fb); font-size:10.5pt; line-height:1.55; }
 
-/* ─── PAGE LAYOUT ─── */
-.sheet-page {
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 2rem 2.5rem 3rem;
-}
+.page { max-width:750px; margin:0 auto; padding:1.6rem 1.8rem 2.2rem; }
 
-/* ─── HEADER ─── */
-.sh-header {
-  text-align: center;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 1.5rem;
-  margin-bottom: 1.8rem;
-  position: relative;
-}
-
-.sh-title-main {
-  font-family: var(--fd);
-  font-size: 2rem;
-  color: var(--goldl);
-  letter-spacing: 0.15em;
-  text-shadow: 0 0 20px rgba(201,168,76,0.3);
-}
-
-.sh-rule {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  margin: 0.5rem 0 0.3rem;
-}
-.sh-rule span { flex:1; height:1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
-.sh-rule em { color: var(--gold); font-style: normal; font-size: 0.6rem; }
-
-.sh-charname {
-  font-family: var(--fh);
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: var(--cream);
-  letter-spacing: 0.08em;
-}
-
-.sh-meta {
-  font-family: var(--fh);
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
-  color: var(--creamd);
-  text-transform: uppercase;
-  margin-top: 0.2rem;
-}
-
-/* ─── PRINT BUTTON ─── */
+/* Print button */
 .print-btn {
-  position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
-  background: linear-gradient(135deg, #2a1c05, #150e00);
-  border: 1px solid var(--goldd);
-  color: var(--goldl);
-  padding: 0.6rem 1.5rem;
-  font-family: var(--fh);
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: all 0.2s;
-  z-index: 100;
+  position:fixed; top:1.2rem; right:1.2rem;
+  background:linear-gradient(135deg,#2a1c05,#150e00);
+  border:1px solid var(--goldd); color:var(--goldl);
+  padding:.5rem 1.2rem; font-family:var(--fh); font-size:.65rem;
+  letter-spacing:.15em; text-transform:uppercase; border-radius:4px; cursor:pointer; z-index:100;
 }
-.print-btn:hover { border-color: var(--gold); box-shadow: 0 0 15px rgba(201,168,76,0.2); }
+.print-btn:hover { border-color:var(--gold); }
 
-/* ─── MAIN GRID ─── */
-.sh-body {
-  display: grid;
-  grid-template-columns: 220px 1fr 1fr;
-  gap: 1.5rem;
-  align-items: start;
+/* Header */
+.sh-header { text-align:center; border-bottom:1px solid var(--bdr); padding-bottom:1rem; margin-bottom:1.3rem; }
+.sh-universe { font-family:var(--fd); font-size:1.5rem; color:var(--goldl); letter-spacing:.12em; }
+.sh-rule { display:flex; align-items:center; gap:.5rem; margin:.35rem 0 .25rem; }
+.sh-rule span { flex:1; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); }
+.sh-rule em { color:var(--gold); font-style:normal; font-size:.55rem; }
+.sh-name { font-family:var(--fh); font-size:1.4rem; font-weight:700; color:var(--cream); letter-spacing:.06em; }
+.sh-meta { font-family:var(--fh); font-size:.6rem; letter-spacing:.14em; color:var(--dim); text-transform:uppercase; margin-top:.15rem; }
+
+/* Section block */
+.sec {
+  background:var(--card); border:1px solid var(--bdr); border-radius:6px;
+  padding:1rem 1.1rem 1.15rem; margin-bottom:1rem; position:relative;
 }
-
-/* ─── PANEL ─── */
-.panel {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 1rem 1rem 1.2rem;
-  position: relative;
+.sec::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--goldd),var(--gold),var(--goldd),transparent);
 }
 
-.panel::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--goldd), var(--gold), var(--goldd), transparent);
+/* Section title */
+.sec-title {
+  font-family:var(--fh); font-size:.6rem; letter-spacing:.22em; text-transform:uppercase;
+  color:var(--gold); border-bottom:1px solid var(--bdr); padding-bottom:.3rem; margin-bottom:.8rem;
+  display:flex; align-items:center; gap:.5rem;
+}
+.sec-title::before { content:''; flex:0 0 30px; height:1px; background:linear-gradient(270deg,var(--bdr),transparent); }
+.sec-title::after  { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--bdr),transparent); }
+
+/* Portrait + identity side by side */
+.header-row { display:flex; gap:1.3rem; align-items:flex-start; }
+
+.portrait-wrap { flex-shrink:0; position:relative; width:150px; height:188px; }
+.portrait-frame-svg { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.portrait-img {
+  position:absolute; inset:9px; width:calc(100% - 18px); height:calc(100% - 18px);
+  object-fit:cover; border-radius:2px;
+}
+.portrait-empty {
+  position:absolute; inset:9px; display:flex; align-items:center; justify-content:center;
+  text-align:center; font-family:var(--fh); font-size:.58rem; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--goldd); border:1px dashed var(--bdr); border-radius:2px;
 }
 
-.panel-title {
-  font-family: var(--fh);
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--gold);
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.4rem;
-  margin-bottom: 0.8rem;
-}
-
-/* ─── LEFT COLUMN ─── */
-.col-left {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* Portrait */
-.portrait-wrapper { display: flex; justify-content: center; }
-
-.portrait-frame {
-  width: 190px;
-  height: 240px;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.portrait-frame img {
-  position: absolute;
-  inset: 12px;
-  width: calc(100% - 24px);
-  height: calc(100% - 24px);
-  object-fit: cover;
-  border-radius: 2px;
-}
-
-.pf-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.portrait-frame.no-photo { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 4px; }
-
-.no-photo-inner {
-  position: absolute;
-  inset: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  font-family: var(--fh);
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--goldd);
-}
-
-/* Identity rows */
-.id-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.05rem;
-  padding: 0.3rem 0;
-  border-bottom: 1px solid rgba(201,168,76,0.1);
-}
-.id-row:last-child { border-bottom: none; }
+/* Identity table */
+.id-table { border-collapse:collapse; width:100%; }
+.id-table td { padding:.17rem .25rem; border-bottom:1px solid rgba(201,168,76,.07); vertical-align:top; }
+.id-table tr:last-child td { border-bottom:none; }
 .id-key {
-  font-family: var(--fh);
-  font-size: 0.55rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--goldd);
+  font-family:var(--fh); font-size:.54rem; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--goldd); white-space:nowrap; padding-right:.5rem; width:105px;
 }
-.id-val {
-  font-family: var(--fb);
-  font-size: 0.9rem;
-  color: var(--cream);
-  line-height: 1.3;
-}
+.id-val { font-size:.88rem; color:var(--cream); }
 
-/* ─── STATS ─── */
-.stats-wrap {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
-}
-
+/* Stats */
+.stats-table { border-collapse:separate; border-spacing:.4rem 0; width:100%; table-layout:fixed; }
 .stat-cell {
-  text-align: center;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(201,168,76,0.2);
-  border-radius: 5px;
-  padding: 0.5rem 0.3rem;
+  text-align:center; border:1px solid var(--bdr); border-radius:5px; padding:.5rem .2rem;
+  background:rgba(0,0,0,.25);
 }
-
-.sc-key {
-  font-family: var(--fh);
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--goldl);
-}
-.sc-val {
-  font-family: var(--fh);
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--cream);
-  line-height: 1;
-  margin: 0.15rem 0;
-}
-.sc-save {
-  font-family: var(--fh);
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--gold);
-}
-.sc-lbl {
-  font-size: 0.55rem;
-  color: var(--creamd);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
+.sc-key { font-family:var(--fh); font-size:.68rem; font-weight:700; letter-spacing:.08em; color:var(--goldl); }
+.sc-sub { font-size:.55rem; color:var(--dim); font-style:italic; margin-bottom:.08rem; }
+.sc-val { font-family:var(--fh); font-size:1.3rem; font-weight:700; color:var(--cream); line-height:1.1; }
+.sc-save-lbl { font-size:.5rem; text-transform:uppercase; letter-spacing:.1em; color:var(--goldd); margin-top:.05rem; }
+.sc-save { font-family:var(--fh); font-size:.88rem; font-weight:700; }
 
 /* HP */
-.hp-block { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.hp-row { display:flex; gap:.7rem; margin-top:.8rem; }
 .hp-cell {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(201,168,76,0.2);
-  border-radius: 5px;
-  padding: 0.6rem;
-  text-align: center;
+  flex:1; text-align:center; background:rgba(0,0,0,.25); border:1px solid var(--bdr);
+  border-radius:5px; padding:.45rem;
 }
-.hp-cell-label {
-  font-family: var(--fh);
-  font-size: 0.55rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--goldd);
-  margin-bottom: 0.2rem;
+.hp-lbl { font-family:var(--fh); font-size:.54rem; letter-spacing:.12em; text-transform:uppercase; color:var(--goldd); margin-bottom:.15rem; }
+.hp-val { font-family:var(--fh); font-size:1.1rem; font-weight:700; color:var(--cream); }
+
+/* Skills — 2 columns */
+.skills-cols { display:grid; grid-template-columns:1fr 1fr; gap:0 1.4rem; }
+.sk-table { border-collapse:collapse; width:100%; }
+.sk-table th {
+  font-family:var(--fh); font-size:.53rem; letter-spacing:.13em; text-transform:uppercase;
+  color:var(--goldd); text-align:left; padding:.18rem .25rem; border-bottom:1px solid var(--bdr);
 }
-.hp-cell-val {
-  font-family: var(--fh);
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--cream);
+.sk-table td { padding:.2rem .25rem; border-bottom:1px solid rgba(201,168,76,.06); }
+.sk-bonus td { background:rgba(201,168,76,.05); }
+.sk-name { color:var(--cream); font-size:.85rem; }
+.sk-formula { color:var(--dim); font-style:italic; font-size:.72rem; }
+.sk-score { font-family:var(--fh); font-size:.82rem; font-weight:700; text-align:right; }
+.star { color:var(--gold); font-size:.58rem; }
+
+/* Equipment */
+.equip-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.9rem; }
+.equip-block h4 {
+  font-family:var(--fh); font-size:.56rem; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:.35rem; padding-bottom:.2rem; border-bottom:1px solid var(--bdr);
 }
-
-/* ─── SKILLS TABLE ─── */
-table.skills-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
+.equip-block ul { list-style:none; padding:0; margin:0; }
+.equip-block li {
+  font-size:.83rem; color:var(--cream); padding:.1rem 0;
+  border-bottom:1px solid rgba(201,168,76,.06);
 }
+.equip-block li:last-child { border-bottom:none; }
+.equip-block li::before { content:'◦ '; color:var(--goldd); }
+.equip-block li.empty { color:var(--dim); font-style:italic; }
 
-table.skills-table th {
-  font-family: var(--fh);
-  font-size: 0.55rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--goldd);
-  text-align: left;
-  padding: 0.2rem 0.3rem;
-  border-bottom: 1px solid var(--border);
+.money-line {
+  margin-top:.7rem; padding:.45rem .7rem;
+  background:rgba(0,0,0,.2); border:1px solid var(--bdr); border-radius:4px;
+  font-family:var(--fh); font-size:.68rem; letter-spacing:.06em; color:var(--goldl);
 }
+.money-lbl { color:var(--goldd); margin-right:.4rem; font-size:.55rem; letter-spacing:.12em; text-transform:uppercase; }
 
-table.skills-table td {
-  padding: 0.25rem 0.3rem;
-  border-bottom: 1px solid rgba(201,168,76,0.07);
-  vertical-align: middle;
+/* Lore */
+.lore-block {
+  border-left:2px solid var(--goldd); padding:.45rem .75rem; margin-bottom:.6rem;
+  background:rgba(255,255,255,.012); border-radius:0 4px 4px 0;
 }
+.lore-block:last-child { margin-bottom:0; }
+.lore-label { font-family:var(--fh); font-size:.56rem; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); margin-bottom:.18rem; }
+.lore-text { font-size:.86rem; color:var(--cream); line-height:1.55; }
 
-.sk-name { color: var(--cream); }
-.sk-formula { color: var(--creamd); font-style: italic; font-size: 0.75rem; }
-.sk-score { font-family: var(--fh); font-size: 0.85rem; font-weight: 700; text-align: right; }
-.bonus-row td { background: rgba(201,168,76,0.06); }
-.bonus-star { color: var(--gold); font-size: 0.6rem; }
-
-/* ─── EQUIPMENT ─── */
-.equip-col { display: flex; flex-direction: column; gap: 1rem; }
-
-ul.item-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0.3rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-ul.item-ul li {
-  font-size: 0.88rem;
-  color: var(--cream);
-  padding: 0.15rem 0;
-  border-bottom: 1px solid rgba(201,168,76,0.07);
-  line-height: 1.3;
-}
-ul.item-ul li:last-child { border-bottom: none; }
-ul.item-ul li.empty { color: var(--creamd); font-style: italic; }
-ul.item-ul li::before { content: '◦ '; color: var(--goldd); }
-
-.money-display {
-  font-family: var(--fh);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  color: var(--goldl);
-  margin-top: 0.3rem;
-}
-
-/* ─── LORE ─── */
-.lore-col { display: flex; flex-direction: column; gap: 1rem; }
-
-.lore-item {
-  background: rgba(255,255,255,0.015);
-  border: 1px solid rgba(201,168,76,0.15);
-  border-left: 2px solid var(--goldd);
-  border-radius: 0 4px 4px 0;
-  padding: 0.7rem 0.8rem;
-}
-
-.lore-label {
-  font-family: var(--fh);
-  font-size: 0.6rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 0.3rem;
-}
-
-.lore-text {
-  font-size: 0.88rem;
-  color: var(--cream);
-  line-height: 1.55;
-}
-
-/* ─── FOOTER ─── */
+/* Footer */
 .sh-footer {
-  text-align: center;
-  margin-top: 2.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-  font-family: var(--fh);
-  font-size: 0.6rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--creamd);
-  opacity: 0.6;
+  text-align:center; margin-top:1.5rem; padding-top:.8rem; border-top:1px solid var(--bdr);
+  font-family:var(--fh); font-size:.52rem; letter-spacing:.18em; text-transform:uppercase; color:var(--dim);
 }
 
-/* ─── PRINT ─── */
+/* ── PRINT ── */
 @media print {
-  body { background: #fff !important; color: #111 !important; }
-  .print-btn { display: none !important; }
-  .sheet-page { padding: 1cm 1.5cm; }
+  body { background:#fff !important; color:#1a1208 !important; }
+  .print-btn { display:none !important; }
+  .page { padding:.7cm 1.1cm; }
+
   :root {
-    --bg: #fff;
-    --cream: #1a1208;
-    --creamd: #555;
-    --gold: #8a6010;
-    --goldl: #6a4a08;
-    --goldd: #9a7020;
-    --border: rgba(138,96,16,0.3);
+    --bg:#fff; --card:#faf5e8;
+    --cream:#1a1208; --dim:#555;
+    --gold:#8a6010; --goldl:#6a4808; --goldd:#9a7020;
+    --bdr:rgba(138,96,16,.22);
   }
-  .panel { border-color: rgba(138,96,16,0.3); }
-  .stat-cell, .hp-cell { border-color: rgba(138,96,16,0.2); background: #faf5e8; }
-  .lore-item { border-color: rgba(138,96,16,0.2); background: #faf5e8; border-left-color: var(--goldd); }
-  ul.item-ul li { border-bottom-color: rgba(138,96,16,0.1); }
-  table.skills-table td { border-bottom-color: rgba(138,96,16,0.1); }
-  .bonus-row td { background: rgba(138,96,16,0.06); }
-  .sh-title-main, .sh-charname { text-shadow: none; }
-  body::before { display: none; }
+
+  .sec { border-color:rgba(138,96,16,.22); background:#faf5e8; }
+  .stat-cell, .hp-cell { background:#f0ebe0; border-color:rgba(138,96,16,.18); }
+  .lore-block { background:#f5f0e5; border-left-color:var(--goldd); }
+  .money-line { background:#f0ebe0; border-color:rgba(138,96,16,.18); }
+
+  .sec       { break-inside:avoid; }
+  .lore-block{ break-inside:avoid; }
+  .equip-block{ break-inside:avoid; }
+
+  .sh-universe, .sh-name { text-shadow:none; }
 }
 </style>
 </head>
 <body>
 
-<button class="print-btn" onclick="window.print()">📥 Télécharger en PDF (Ctrl+P)</button>
+<button class="print-btn" onclick="window.print()">📥 Enregistrer en PDF (Ctrl+P)</button>
 
-<div class="sheet-page">
+<div class="page">
 
-  <!-- ── HEADER ── -->
+  <!-- HEADER -->
   <div class="sh-header">
-    <div class="sh-title-main">Glorée</div>
+    <div class="sh-universe">Glorée</div>
     <div class="sh-rule"><span></span><em>◆</em><span></span></div>
-    <div class="sh-charname">${esc(d.charName)}</div>
+    <div class="sh-name">${esc(d.charName)}</div>
     <div class="sh-meta">
       ${[d.race, d.nation, d.class1, d.alignment].filter(Boolean).map(esc).join(' · ')}
-      ${d.playerName ? ` &ensp;—&ensp; Joueur : ${esc(d.playerName)}` : ''}
+      ${d.playerName ? `&ensp;—&ensp; Joueur : ${esc(d.playerName)}` : ''}
     </div>
   </div>
 
-  <!-- ── BODY GRID ── -->
-  <div class="sh-body">
-
-    <!-- ══ LEFT COLUMN ══ -->
-    <div class="col-left">
-
-      <!-- Portrait -->
-      ${photoBlock}
-
-      <!-- Identity -->
-      <div class="panel">
-        <div class="panel-title">👤 Identité</div>
-        ${[
-          { k:'Race',           v: orDash(d.race) },
-          { k:'Nation',         v: [d.nation, d.originDetail].filter(Boolean).join(', ') || '—' },
-          { k:'Religion',       v: orDash(d.religion) },
-          { k:'Main Dominante', v: orDash(d.hand) },
-          { k:'Classe Sociale', v: orDash(d.socialClass) },
-          { k:'Métier',         v: orDash(d.job) },
-          { k:'Sexe',           v: orDash(d.sex) },
-          { k:'Âge',            v: d.age ? `${d.age} ans` : '—' },
-          { k:'Taille',         v: orDash(d.height) },
-        ].map(r => `
-          <div class="id-row">
-            <div class="id-key">${esc(r.k)}</div>
-            <div class="id-val">${esc(r.v)}</div>
-          </div>
-        `).join('')}
+  <!-- PORTRAIT + IDENTITÉ -->
+  <div class="sec">
+    <div class="sec-title">👤 Identité</div>
+    <div class="header-row">
+      <div class="portrait-wrap">
+        <svg class="portrait-frame-svg" viewBox="0 0 150 188" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="3" width="144" height="182" fill="none" stroke="#c9a84c" stroke-width="1.2" opacity=".6"/>
+          <rect x="7" y="7" width="136" height="174" fill="none" stroke="#c9a84c" stroke-width=".4" opacity=".35"/>
+          <path d="M3,22 L3,3 L22,3"   fill="none" stroke="#d4a853" stroke-width="2.2"/><circle cx="3"   cy="3"   r="2.2" fill="#d4a853"/>
+          <path d="M128,3  L147,3  L147,22" fill="none" stroke="#d4a853" stroke-width="2.2"/><circle cx="147" cy="3"   r="2.2" fill="#d4a853"/>
+          <path d="M3,166  L3,185  L22,185" fill="none" stroke="#d4a853" stroke-width="2.2"/><circle cx="3"   cy="185" r="2.2" fill="#d4a853"/>
+          <path d="M128,185 L147,185 L147,166" fill="none" stroke="#d4a853" stroke-width="2.2"/><circle cx="147" cy="185" r="2.2" fill="#d4a853"/>
+        </svg>
+        ${portrait}
       </div>
-
-      <!-- Physique -->
-      ${d.physique ? `
-      <div class="panel">
-        <div class="panel-title">🪞 Apparence</div>
-        <div style="font-size:0.85rem; line-height:1.5">${nl2br(d.physique)}</div>
-      </div>` : ''}
-
-      <!-- Traits -->
-      ${d.personality ? `
-      <div class="panel">
-        <div class="panel-title">🎭 Personnalité</div>
-        <div style="font-size:0.85rem; line-height:1.5">${nl2br(d.personality)}</div>
-      </div>` : ''}
-
+      <table class="id-table">${idRows}</table>
     </div>
+  </div>
 
-    <!-- ══ MIDDLE COLUMN ══ -->
-    <div>
+  <!-- APPARENCE & PERSONNALITÉ -->
+  ${(d.physique || d.personality) ? `
+  <div class="sec">
+    <div class="sec-title">🪞 Apparence &amp; Personnalité</div>
+    ${d.physique    ? `<div class="lore-block"><div class="lore-label">Apparence physique</div><div class="lore-text">${nl2br(d.physique)}</div></div>` : ''}
+    ${d.personality ? `<div class="lore-block"><div class="lore-label">Traits de personnalité</div><div class="lore-text">${nl2br(d.personality)}</div></div>` : ''}
+  </div>` : ''}
 
-      <!-- Stats -->
-      <div class="panel" style="margin-bottom:1rem">
-        <div class="panel-title">🎲 Statistiques · Dés du MJ</div>
-        <div class="stats-wrap">${statsHTML}</div>
-        <div style="margin-top:0.8rem">
-          <div class="panel-title" style="margin-top:0.8rem">❤️ Santé</div>
-          <div class="hp-block">
-            <div class="hp-cell">
-              <div class="hp-cell-label">Santé Physique</div>
-              <div class="hp-cell-val">${d.hp} / ${d.hp}</div>
-            </div>
-            <div class="hp-cell">
-              <div class="hp-cell-label">Santé Mentale</div>
-              <div class="hp-cell-val">100 / 100%</div>
-            </div>
-          </div>
-        </div>
+  <!-- CLASSES -->
+  <div class="sec">
+    <div class="sec-title">⚔️ Classes &amp; Alignement</div>
+    <table class="id-table">${classRows}</table>
+  </div>
+
+  <!-- STATISTIQUES -->
+  <div class="sec">
+    <div class="sec-title">🎲 Statistiques</div>
+    <table class="stats-table"><tr>${statCells}</tr></table>
+    <div class="hp-row">
+      <div class="hp-cell">
+        <div class="hp-lbl">❤️ Santé Physique</div>
+        <div class="hp-val">${d.hp} / ${d.hp}</div>
       </div>
-
-      <!-- Alignment & Classes -->
-      <div class="panel" style="margin-bottom:1rem">
-        <div class="panel-title">⚔️ Classes & Alignement</div>
-        <div class="id-row"><div class="id-key">Classe Principale</div><div class="id-val">${esc(orDash(d.class1))}</div></div>
-        ${d.class2 ? `<div class="id-row"><div class="id-key">Classe Secondaire</div><div class="id-val">${esc(d.class2)}</div></div>` : ''}
-        <div class="id-row"><div class="id-key">Alignement</div><div class="id-val">${esc(orDash(d.alignment))}</div></div>
+      <div class="hp-cell">
+        <div class="hp-lbl">🧠 Santé Mentale</div>
+        <div class="hp-val">100 / 100%</div>
       </div>
-
-      <!-- Skills -->
-      <div class="panel">
-        <div class="panel-title">⚡ Compétences <span style="opacity:0.6;font-size:0.55rem">(★ = bonus +2)</span></div>
-        <table class="skills-table">
-          <thead>
-            <tr><th>Compétence</th><th>Base</th><th style="text-align:right">Score</th></tr>
-          </thead>
-          <tbody>${skillRows}</tbody>
-        </table>
-      </div>
-
     </div>
+  </div>
 
-    <!-- ══ RIGHT COLUMN ══ -->
-    <div>
-
-      <!-- Equipment -->
-      <div class="panel" style="margin-bottom:1rem">
-        <div class="panel-title">⚔️ Équipement Lourd <span style="opacity:0.6">(${d.equipSlots} emplacements)</span></div>
-        <ul class="item-ul">${heavyItems}</ul>
-      </div>
-
-      <div class="panel" style="margin-bottom:1rem">
-        <div class="panel-title">👘 Équipement Descriptif</div>
-        <ul class="item-ul">${descItems}</ul>
-      </div>
-
-      <div class="panel" style="margin-bottom:1rem">
-        <div class="panel-title">🎒 Inventaire</div>
-        <ul class="item-ul">${invItems}</ul>
-      </div>
-
-      <div class="panel" style="margin-bottom:1rem">
-        <div class="panel-title">💰 Monnaie</div>
-        <div class="money-display">${moneyStr}</div>
-      </div>
-
-      <!-- Lore -->
-      ${loreBlock ? `
-      <div class="panel">
-        <div class="panel-title">📜 Histoire & Lore</div>
-        <div class="lore-col">${loreBlock}</div>
-      </div>` : ''}
-
+  <!-- COMPÉTENCES -->
+  <div class="sec">
+    <div class="sec-title">⚡ Compétences <span style="opacity:.5;font-size:.53rem;letter-spacing:.04em">(★ = bonus +2)</span></div>
+    <div class="skills-cols">
+      <table class="sk-table">
+        <thead><tr><th>Compétence</th><th>Base</th><th style="text-align:right">Score</th></tr></thead>
+        <tbody>${d.skillScores.slice(0, Math.ceil(d.skillScores.length / 2)).map(s => `
+          <tr class="${s.hasBonus ? 'sk-bonus' : ''}">
+            <td class="sk-name">${esc(s.name)}${s.hasBonus ? ' <span class="star">★</span>' : ''}</td>
+            <td class="sk-formula">${esc(s.formula)}</td>
+            <td class="sk-score" style="color:${scoreColor(s.score)}">${fmt(s.score)}</td>
+          </tr>`).join('')}</tbody>
+      </table>
+      <table class="sk-table">
+        <thead><tr><th>Compétence</th><th>Base</th><th style="text-align:right">Score</th></tr></thead>
+        <tbody>${d.skillScores.slice(Math.ceil(d.skillScores.length / 2)).map(s => `
+          <tr class="${s.hasBonus ? 'sk-bonus' : ''}">
+            <td class="sk-name">${esc(s.name)}${s.hasBonus ? ' <span class="star">★</span>' : ''}</td>
+            <td class="sk-formula">${esc(s.formula)}</td>
+            <td class="sk-score" style="color:${scoreColor(s.score)}">${fmt(s.score)}</td>
+          </tr>`).join('')}</tbody>
+      </table>
     </div>
+  </div>
 
-  </div><!-- end sh-body -->
+  <!-- ÉQUIPEMENT -->
+  <div class="sec">
+    <div class="sec-title">🗡️ Équipement &amp; Inventaire <span style="opacity:.5;font-size:.53rem">(${d.equipSlots} emplacements)</span></div>
+    <div class="equip-grid">
+      <div class="equip-block">
+        <h4>⚔️ Équipement Lourd</h4>
+        <ul>${liList(d.heavyEquip)}</ul>
+      </div>
+      <div class="equip-block">
+        <h4>👘 Équipement Descriptif</h4>
+        <ul>${liList(d.descEquip)}</ul>
+      </div>
+      <div class="equip-block">
+        <h4>🎒 Inventaire</h4>
+        <ul>${liList(d.inventory)}</ul>
+      </div>
+    </div>
+    <div class="money-line">
+      <span class="money-lbl">💰 Monnaie</span>${moneyStr}
+    </div>
+  </div>
 
-  <!-- ── FOOTER ── -->
+  <!-- HISTOIRE & LORE -->
+  ${loreHTML ? `
+  <div class="sec">
+    <div class="sec-title">📜 Histoire &amp; Lore</div>
+    ${loreHTML}
+  </div>` : ''}
+
+  <!-- FOOTER -->
   <div class="sh-footer">
-    Univers de Glorée — Création originale protégée &ensp;·&ensp; © 2020–2025 &ensp;◆&ensp;
-    Fiche générée le ${new Date().toLocaleDateString('fr-FR', { day:'2-digit', month:'long', year:'numeric' })}
+    Univers de Glorée — Création originale protégée &ensp;·&ensp; © 2020–2026
+    &ensp;◆&ensp; Fiche générée le ${today}
   </div>
 
-</div><!-- end sheet-page -->
-
+</div>
 </body>
 </html>`;
 }
